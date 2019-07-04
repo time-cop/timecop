@@ -1,6 +1,18 @@
 # Timecop
 
+## Building
 
+```bash
+make
+```
+
+## Running
+
+NB: Currently the CLI blocks until the menubar app is quit (see [TODO](#TODO))
+
+```bash
+./timecop
+```
 
 
 # TODO
