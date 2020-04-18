@@ -1,8 +1,8 @@
 package main
 
 import (
-	"time"
 	"fmt"
+	"time"
 
 	"github.com/caseymrm/menuet"
 	config "github.com/time-cop/timecop/pkg/config"
@@ -18,6 +18,71 @@ func helloClock() {
 	}
 }
 
+func humanDuration(duration float32) string {
+	if duration < 1 {
+		return fmt.Sprintf("%.0f secs", duration*60)
+	}
+	return fmt.Sprintf("%.0f mins", duration)
+}
+
+func menuItem(db *database.MemoryDatabase, task *database.Task) func() []menuet.MenuItem {
+	return func() []menuet.MenuItem {
+		items := []menuet.MenuItem{}
+
+		title := task.Title
+
+		items = append(items, menuet.MenuItem{
+			Text: title,
+		})
+
+		items = append(items, menuet.MenuItem{
+			Text: "snooze",
+			Clicked: func() {
+				db.SnoozeTask(task)
+				db.Sort()
+			},
+		})
+
+		items = append(items, menuet.MenuItem{
+			Text: "finish",
+			Clicked: func() {
+				db.CompleteTask(task)
+				db.Sort()
+			},
+		})
+
+		return items
+	}
+}
+
+func menuItems(db *database.MemoryDatabase) func() []menuet.MenuItem {
+	return func() []menuet.MenuItem {
+		items := []menuet.MenuItem{}
+		db.Sort()
+		currentTask := db.Tasks[db.CurrentTaskIndex]
+		for _, task := range db.Incomplete() {
+			title := task.Title
+			if task == currentTask {
+				title = fmt.Sprintf("... %s", title)
+			}
+			if task.SnoozeTimeLeft > 0 {
+				timeLeft := humanDuration(task.SnoozeTimeLeft)
+				title = fmt.Sprintf("%s ⏳%s", title, timeLeft)
+			}
+			item := menuet.MenuItem{
+				Text: title,
+				Clicked: func() {
+
+				},
+				Children: menuItem(db, task),
+			}
+			items = append(items, item)
+		}
+
+		return items
+	}
+}
+
 func main() {
 	go helloClock()
 	err := config.Init()
@@ -28,26 +93,26 @@ func main() {
 	db := database.NewMemoryDatabase()
 	// the following tasks should end up sorted
 	db.AddTask(&database.Task{
-		Title: "Tidy room",
+		Title:      "Tidy room",
 		IsComplete: true,
 	})
 	db.AddTask(&database.Task{
-		Title: "Sleep",
+		Title:           "Sleep",
 		LengthInMinutes: 1000,
-		SnoozeTimeLeft: 20.0,
+		SnoozeTimeLeft:  20.0,
 	})
 	db.AddTask(&database.Task{
-		Title: "Procrastinate",
+		Title:           "Procrastinate",
 		LengthInMinutes: 1000,
-		IsComplete: true,
+		IsComplete:      true,
 	})
 	db.AddTask(&database.Task{
-		Title: "Work more on timecop",
+		Title:           "Work more on timecop",
 		LengthInMinutes: 1000,
-		Priority: 10,
+		Priority:        10,
 	})
 	snoozeTask := db.AddTask(&database.Task{
-		Title: "Work more on actual work",
+		Title:           "Work more on actual work",
 		LengthInMinutes: 1000,
 	})
 	db.Sort()
@@ -56,6 +121,7 @@ func main() {
 	db.SnoozeTask(snoozeTask)
 	db.Sort()
 	fmt.Printf("Tasks: %s\n", db.Tasks)
+	menuet.App().Label = "com.github.pentaphobe.timecop"
+	menuet.App().Children = menuItems(db)
 	menuet.App().RunApplication()
 }
-

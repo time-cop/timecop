@@ -1,10 +1,11 @@
 package database
 
 import (
-	"sort"
 	"fmt"
+	"sort"
 	"time"
-//	"strings"
+
+	//	"strings"
 
 	"github.com/google/uuid"
 	"gopkg.in/yaml.v2"
@@ -13,23 +14,23 @@ import (
 )
 
 type Task struct {
-	ID	string	`yaml:id`
-	Title	string	`yaml:title`
-	originalLengthInMinutes float32	`yaml:originalLength`
-	LengthInMinutes	float32	`yaml:length`
-	Priority	uint	`yaml:priority`
-	SnoozeTimeLeft	float32	`yaml:snoozeTimeLeft`
-	IsComplete	bool	`yaml:isComplete`
-	CreatedAt	int64	`yaml:createdAt`
-	UpdatedAt	int64	`yaml:updatedAt`
-	CompletedAt	int64	`yaml:completedAt`
+	ID                      string  `yaml:id`
+	Title                   string  `yaml:title`
+	originalLengthInMinutes float32 `yaml:originalLength`
+	LengthInMinutes         float32 `yaml:length`
+	Priority                uint    `yaml:priority`
+	SnoozeTimeLeft          float32 `yaml:snoozeTimeLeft`
+	IsComplete              bool    `yaml:isComplete`
+	CreatedAt               int64   `yaml:createdAt`
+	UpdatedAt               int64   `yaml:updatedAt`
+	CompletedAt             int64   `yaml:completedAt`
 }
 
 type TaskList []*Task
 
 type DatabaseStore struct {
-	Tasks	TaskList
-	CurrentTaskIndex	uint
+	Tasks            TaskList
+	CurrentTaskIndex uint
 }
 
 type Database interface {
@@ -47,8 +48,7 @@ type MemoryDatabase struct {
 func NewMemoryDatabase() *MemoryDatabase {
 	return &MemoryDatabase{
 		DatabaseStore{
-			Tasks: TaskList{
-			},
+			Tasks:            TaskList{},
 			CurrentTaskIndex: 0,
 		},
 	}
@@ -84,6 +84,16 @@ func (db *MemoryDatabase) SnoozeTask(task *Task) {
 func (db *MemoryDatabase) CompleteTask(task *Task) {
 	task.IsComplete = true
 	task.CompletedAt = time.Now().Unix()
+}
+
+func (db *MemoryDatabase) Incomplete() TaskList {
+	tasks := TaskList{}
+	for _, item := range db.Tasks {
+		if !item.IsComplete {
+			tasks = append(tasks, item)
+		}
+	}
+	return tasks
 }
 
 // CalculatePriority returns a number which _increases_ with task unimportance

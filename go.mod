@@ -6,3 +6,5 @@ require (
 	github.com/google/uuid v1.1.1
 	gopkg.in/yaml.v2 v2.2.2
 )
+
+go 1.13
