@@ -79,11 +79,26 @@ func (db *MemoryDatabase) SnoozeTaskTime(task *Task, snoozeInMinutes float32) {
 
 func (db *MemoryDatabase) SnoozeTask(task *Task) {
 	db.SnoozeTaskTime(task, config.AppConfig.SnoozeInMinutes)
+	db.Sort()
+	db.CurrentTaskIndex = 0
 }
 
 func (db *MemoryDatabase) CompleteTask(task *Task) {
 	task.IsComplete = true
 	task.CompletedAt = time.Now().Unix()
+}
+
+func (db *MemoryDatabase) CurrentTask() *Task {
+	return db.Tasks[db.CurrentTaskIndex]
+}
+
+func (db *MemoryDatabase) SetCurrentTask(task *Task) {
+	for idx, t := range db.Tasks {
+		if t == task {
+			db.CurrentTaskIndex = uint(idx)
+			break
+		}
+	}
 }
 
 func (db *MemoryDatabase) Incomplete() TaskList {

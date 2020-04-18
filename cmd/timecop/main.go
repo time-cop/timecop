@@ -9,10 +9,10 @@ import (
 	database "github.com/time-cop/timecop/pkg/database"
 )
 
-func helloClock() {
+func helloClock(db *database.MemoryDatabase) {
 	for {
 		menuet.App().SetMenuState(&menuet.MenuState{
-			Title: "Time " + time.Now().Format(":05"),
+			Title: db.CurrentTask().Title + " " + time.Now().Format(":05"),
 		})
 		time.Sleep(time.Second)
 	}
@@ -59,8 +59,9 @@ func menuItems(db *database.MemoryDatabase) func() []menuet.MenuItem {
 	return func() []menuet.MenuItem {
 		items := []menuet.MenuItem{}
 		db.Sort()
-		currentTask := db.Tasks[db.CurrentTaskIndex]
+		currentTask := db.CurrentTask()
 		for _, task := range db.Incomplete() {
+			thisTask := task
 			title := task.Title
 			if task == currentTask {
 				title = fmt.Sprintf("... %s", title)
@@ -72,7 +73,7 @@ func menuItems(db *database.MemoryDatabase) func() []menuet.MenuItem {
 			item := menuet.MenuItem{
 				Text: title,
 				Clicked: func() {
-
+					db.SetCurrentTask(thisTask)
 				},
 				Children: menuItem(db, task),
 			}
@@ -84,7 +85,6 @@ func menuItems(db *database.MemoryDatabase) func() []menuet.MenuItem {
 }
 
 func main() {
-	go helloClock()
 	err := config.Init()
 	if err != nil {
 		panic(err)
@@ -121,6 +121,7 @@ func main() {
 	db.SnoozeTask(snoozeTask)
 	db.Sort()
 	fmt.Printf("Tasks: %s\n", db.Tasks)
+	go helloClock(db)
 	menuet.App().Label = "com.github.pentaphobe.timecop"
 	menuet.App().Children = menuItems(db)
 	menuet.App().RunApplication()
