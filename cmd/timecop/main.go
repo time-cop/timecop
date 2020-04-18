@@ -2,87 +2,11 @@ package main
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/caseymrm/menuet"
 	config "github.com/time-cop/timecop/pkg/config"
 	database "github.com/time-cop/timecop/pkg/database"
 )
-
-func helloClock(db *database.MemoryDatabase) {
-	for {
-		menuet.App().SetMenuState(&menuet.MenuState{
-			Title: db.CurrentTask().Title + " " + time.Now().Format(":05"),
-		})
-		time.Sleep(time.Second)
-	}
-}
-
-func humanDuration(duration float32) string {
-	if duration < 1 {
-		return fmt.Sprintf("%.0f secs", duration*60)
-	}
-	return fmt.Sprintf("%.0f mins", duration)
-}
-
-func menuItem(db *database.MemoryDatabase, task *database.Task) func() []menuet.MenuItem {
-	return func() []menuet.MenuItem {
-		items := []menuet.MenuItem{}
-
-		title := task.Title
-
-		items = append(items, menuet.MenuItem{
-			Text: title,
-		})
-
-		items = append(items, menuet.MenuItem{
-			Text: "snooze",
-			Clicked: func() {
-				db.SnoozeTask(task)
-				db.Sort()
-			},
-		})
-
-		items = append(items, menuet.MenuItem{
-			Text: "finish",
-			Clicked: func() {
-				db.CompleteTask(task)
-				db.Sort()
-			},
-		})
-
-		return items
-	}
-}
-
-func menuItems(db *database.MemoryDatabase) func() []menuet.MenuItem {
-	return func() []menuet.MenuItem {
-		items := []menuet.MenuItem{}
-		db.Sort()
-		currentTask := db.CurrentTask()
-		for _, task := range db.Incomplete() {
-			thisTask := task
-			title := task.Title
-			if task == currentTask {
-				title = fmt.Sprintf("... %s", title)
-			}
-			if task.SnoozeTimeLeft > 0 {
-				timeLeft := humanDuration(task.SnoozeTimeLeft)
-				title = fmt.Sprintf("%s ⏳%s", title, timeLeft)
-			}
-			item := menuet.MenuItem{
-				Text: title,
-				Clicked: func() {
-					db.SetCurrentTask(thisTask)
-				},
-				Children: menuItem(db, task),
-			}
-			items = append(items, item)
-		}
-
-		return items
-	}
-}
 
 func main() {
 	err := config.Init()
