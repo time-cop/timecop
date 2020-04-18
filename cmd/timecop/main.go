@@ -2,13 +2,31 @@ package main
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/caseymrm/menuet"
+	"github.com/takama/daemon"
 	config "github.com/time-cop/timecop/pkg/config"
 	database "github.com/time-cop/timecop/pkg/database"
 )
 
 func main() {
+	{
+		srv, err := daemon.New(serviceName, description, dependencies...)
+		if err != nil {
+			errlog.Println("Error: ", err)
+			os.Exit(1)
+		}
+		service := &Service{srv}
+		status, err := service.Manage()
+		if err != nil {
+			errlog.Println(status, "\nError: ", err)
+			os.Exit(1)
+		}
+		fmt.Println(status)
+		os.Exit(1)
+	}
+
 	err := config.Init()
 	if err != nil {
 		panic(err)
